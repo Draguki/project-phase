@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useSyncExternalStore, useCallback } from 'react';
 
 export type TransactionCategory = 'fees' | 'print' | 'food';
 
@@ -54,26 +54,54 @@ const DEFAULT_STATE: WalletState = {
 
 const STORAGE_KEY = 'campuspay_wallet_state';
 
-export function useWallet() {
-  const [state, setState] = useState<WalletState>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        return JSON.parse(stored);
-      }
-    } catch (e) {
-      console.error('Failed to load wallet state', e);
+function loadInitialState(): WalletState {
+  if (typeof window === 'undefined') return DEFAULT_STATE;
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return { ...DEFAULT_STATE, ...parsed };
     }
-    return DEFAULT_STATE;
-  });
+  } catch (e) {
+    console.error('Failed to load wallet state', e);
+  }
+  return DEFAULT_STATE;
+}
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch (e) {
-      console.error('Failed to save wallet state', e);
-    }
-  }, [state]);
+let currentState: WalletState = loadInitialState();
+const listeners = new Set<() => void>();
+
+function emit() {
+  for (const l of listeners) l();
+}
+
+function persist(state: WalletState) {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.error('Failed to save wallet state', e);
+  }
+}
+
+function setState(updater: (prev: WalletState) => WalletState) {
+  currentState = updater(currentState);
+  persist(currentState);
+  emit();
+}
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function getSnapshot() {
+  return currentState;
+}
+
+export function useWallet() {
+  const state = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   const login = useCallback((username: string) => {
     setState(prev => ({
@@ -91,34 +119,37 @@ export function useWallet() {
     }));
   }, []);
 
-  const transact = useCallback((amount: number, pointsEarned: number, category: TransactionCategory, merchant: string) => {
-    setState(prev => {
-      if (prev.balance < amount) {
-        throw new Error('Insufficient balance');
-      }
-      return {
-        ...prev,
-        balance: prev.balance - amount,
-        points: prev.points + pointsEarned,
-        transactions: [
-          {
-            id: `txn-${Date.now()}`,
-            category,
-            merchant,
-            amount,
-            points: pointsEarned,
-            timestamp: new Date().toISOString(),
-          },
-          ...prev.transactions
-        ]
-      };
-    });
-  }, []);
+  const transact = useCallback(
+    (amount: number, pointsEarned: number, category: TransactionCategory, merchant: string) => {
+      setState(prev => {
+        if (prev.balance < amount) {
+          throw new Error('Insufficient balance');
+        }
+        return {
+          ...prev,
+          balance: prev.balance - amount,
+          points: prev.points + pointsEarned,
+          transactions: [
+            {
+              id: `txn-${Date.now()}`,
+              category,
+              merchant,
+              amount,
+              points: pointsEarned,
+              timestamp: new Date().toISOString(),
+            },
+            ...prev.transactions,
+          ],
+        };
+      });
+    },
+    []
+  );
 
   return {
     ...state,
     login,
     logout,
-    transact
+    transact,
   };
 }
