@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { Wallet } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function Login() {
   const { login } = useWallet();
@@ -25,7 +26,8 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-[100dvh] w-full items-center justify-center bg-background px-4 py-10 text-foreground">
+    <div className="relative flex min-h-[100dvh] w-full items-center justify-center bg-background px-4 py-10 text-foreground">
+      <ThemeToggle className="absolute right-5 top-5" />
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="w-full max-w-[420px]">
         <div className="mb-8 flex flex-col items-center text-center">
           <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-foreground text-background"><Wallet className="h-6 w-6" /></div>

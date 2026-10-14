@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { SiGithub, SiFigma, SiNotion, SiAutodesk } from "react-icons/si";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const ACTION_CARDS = [
   { id: "fees", title: "Pay fees", description: "Semester dues", icon: GraduationCap, amount: 500, points: 10, category: "fees" as TransactionCategory },
@@ -38,7 +39,7 @@ const CAMPUS_REWARDS = [
 ];
 
 const STUDENT_OFFERS = [
-  { name: "GitHub Education", benefit: "Student Developer Pack with developer tools, learning resources, and partner offers.", note: "Verified student account required", url: "https://education.github.com/pack", icon: SiGithub, color: "text-[#181717]" },
+  { name: "GitHub Education", benefit: "Student Developer Pack with developer tools, learning resources, and partner offers.", note: "Verified student account required", url: "https://education.github.com/pack", icon: SiGithub, color: "text-[#181717] dark:text-white" },
   { name: "Figma for Education", benefit: "Figma and FigJam education tools for student design and team projects.", note: "Student or educator verification required", url: "https://www.figma.com/education/", icon: SiFigma, color: "text-[#F24E1E]" },
   { name: "Notion Education Plan", benefit: "Free individual education plan for notes, coursework, projects, and collaboration.", note: "Eligible college email required", url: "https://www.notion.com/help/notion-for-education", icon: SiNotion, color: "text-foreground" },
   { name: "Autodesk Education", benefit: "Access to professional design software for learning and research.", note: "Eligible students · renewed annually", url: "https://www.autodesk.com/support/account/education/students-educators/overview", icon: SiAutodesk, color: "text-[#0696D7]" },
@@ -79,7 +80,7 @@ export default function Dashboard() {
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
           <a href="/dashboard" className="flex items-center gap-2.5 font-semibold tracking-tight"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-foreground text-background"><Wallet className="h-5 w-5" /></span>CampusPay</a>
-          <div className="flex items-center gap-3"><span className="hidden text-sm text-muted-foreground sm:block">{username}</span><span className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-sm font-semibold">{username?.charAt(0).toUpperCase()}</span><button aria-label="Sign out" onClick={logout} className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"><LogOut className="h-4 w-4" /></button></div>
+          <div className="flex items-center gap-3"><span className="hidden text-sm text-muted-foreground sm:block">{username}</span><ThemeToggle /><span className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-sm font-semibold">{username?.charAt(0).toUpperCase()}</span><button aria-label="Sign out" onClick={logout} className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"><LogOut className="h-4 w-4" /></button></div>
         </div>
       </header>
 

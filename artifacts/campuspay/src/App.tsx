@@ -6,6 +6,7 @@ import NotFound from "@/pages/not-found";
 import { useWallet } from "@/hooks/useWallet";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
+import { ThemeProvider, useTheme } from "@/components/ThemeProvider";
 
 const queryClient = new QueryClient();
 
@@ -45,17 +46,22 @@ function Router() {
   );
 }
 
-function App() {
+function AppContent() {
+  const { theme } = useTheme();
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
           <Router />
         </WouterRouter>
-        <Toaster theme="light" position="top-center" />
+        <Toaster theme={theme} position="top-center" />
       </TooltipProvider>
     </QueryClientProvider>
   );
+}
+
+function App() {
+  return <ThemeProvider><AppContent /></ThemeProvider>;
 }
 
 export default App;
