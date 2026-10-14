@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import {
   Wallet, LogOut, GraduationCap, Printer, Coffee, ArrowRightLeft,
   Clock, Sparkles, Plus, CreditCard, ShieldCheck, ArrowUpRight,
+  BookOpen, Brain, BookMarked,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
@@ -28,8 +29,15 @@ const PAYMENT_METHODS = [
   { name: "RuPay", mark: <span className="text-sm font-black italic text-[#097c57]">RuPay</span> },
 ];
 
+const CAMPUS_REWARDS = [
+  { id: "print-credit", title: "Study print pack", detail: "25 pages for notes and assignments", points: 25, icon: Printer, partner: "Library print desk" },
+  { id: "workshop-pass", title: "Skills workshop pass", detail: "One campus career or study-skills workshop", points: 75, icon: BookOpen, partner: "Student learning centre" },
+  { id: "tutoring-session", title: "Peer tutoring session", detail: "A 30-minute subject support session", points: 100, icon: Brain, partner: "Peer tutoring hub" },
+  { id: "bookstore-credit", title: "Campus bookstore credit", detail: "A learning-materials voucher worth $10", points: 150, icon: BookMarked, partner: "Campus bookstore" },
+];
+
 export default function Dashboard() {
-  const { username, balance, points, transactions, logout, transact } = useWallet();
+  const { username, balance, points, transactions, redeemedRewards, logout, transact, claimReward } = useWallet();
   const [selectedAction, setSelectedAction] = useState<typeof ACTION_CARDS[number] | null>(null);
   const handleTransact = () => {
     if (!selectedAction) return;
@@ -40,6 +48,14 @@ export default function Dashboard() {
       toast.error(e.message || "Transaction failed");
     }
     setSelectedAction(null);
+  };
+  const handleClaimReward = (reward: typeof CAMPUS_REWARDS[number]) => {
+    try {
+      claimReward(reward.id, reward.points);
+      toast.success(`${reward.title} claimed`, { description: "Show this claim at the listed campus partner desk." });
+    } catch (e: any) {
+      toast.error(e.message || "Could not claim this reward");
+    }
   };
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -67,6 +83,8 @@ export default function Dashboard() {
           </section>
 
           <section><div className="mb-4"><h2 className="text-lg font-semibold tracking-tight">Quick pay</h2><p className="mt-1 text-sm text-muted-foreground">Common campus payments, ready when you are.</p></div><div className="grid gap-3 sm:grid-cols-3">{ACTION_CARDS.map((action, idx) => <motion.button key={action.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.06 }} onClick={() => setSelectedAction(action)} className="group flex items-center gap-4 rounded-xl border border-border bg-card p-4 text-left transition-colors hover:bg-secondary/60"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-border bg-background text-foreground"><action.icon className="h-5 w-5" /></span><span className="min-w-0 flex-1"><span className="block font-medium">{action.title}</span><span className="mt-0.5 block text-sm text-muted-foreground">{formatCurrency(action.amount)} · {action.description}</span></span><ArrowUpRight className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" /></motion.button>)}</div></section>
+
+          <section><div className="mb-4 flex items-end justify-between"><div><h2 className="text-lg font-semibold tracking-tight">Learning rewards</h2><p className="mt-1 text-sm text-muted-foreground">Use points for practical support in your studies.</p></div><span className="rounded-full border border-border px-3 py-1 text-xs font-medium">{points} pts available</span></div><div className="grid gap-3 sm:grid-cols-2">{CAMPUS_REWARDS.map((reward) => { const claimed = redeemedRewards.includes(reward.id); const affordable = points >= reward.points; return <Card key={reward.id} className="border-border shadow-sm"><CardContent className="flex h-full flex-col p-4"><div className="flex items-start justify-between gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-background"><reward.icon className="h-5 w-5" /></span><span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-medium">{reward.points} pts</span></div><h3 className="mt-4 font-semibold">{reward.title}</h3><p className="mt-1 flex-1 text-sm text-muted-foreground">{reward.detail}</p><p className="mt-3 text-xs text-muted-foreground">Redeem at · {reward.partner}</p><Button className="mt-4 w-full" variant={claimed ? "secondary" : "default"} disabled={claimed || !affordable} onClick={() => handleClaimReward(reward)}>{claimed ? "Claimed" : affordable ? "Claim reward" : `Need ${reward.points - points} more pts`}</Button></CardContent></Card>; })}</div><p className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-muted-foreground"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />Demo redemption tracking only. Actual availability and fulfilment depend on participating campus partners.</p></section>
 
           <section><div className="mb-4 flex items-end justify-between"><div><h2 className="text-lg font-semibold tracking-tight">Recent activity</h2><p className="mt-1 text-sm text-muted-foreground">Your latest campus transactions.</p></div><Button variant="ghost" size="sm" className="text-muted-foreground">View all</Button></div><div className="overflow-hidden rounded-xl border border-border bg-card">{transactions.length === 0 ? <div className="flex flex-col items-center px-6 py-12 text-center"><span className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-secondary"><Clock className="h-5 w-5 text-muted-foreground" /></span><p className="font-medium">Nothing here yet</p><p className="mt-1 text-sm text-muted-foreground">Your payments will show up here.</p></div> : transactions.map((txn) => <div key={txn.id} className="flex items-center justify-between border-b border-border px-4 py-4 last:border-0 sm:px-5"><div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-muted-foreground">{getCategoryIcon(txn.category)}</span><div><p className="text-sm font-medium">{txn.merchant}</p><p className="mt-0.5 text-xs text-muted-foreground">{new Intl.DateTimeFormat("en-IN", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(txn.timestamp))}</p></div></div><div className="text-right"><p className="text-sm font-semibold">− {formatCurrency(txn.amount)}</p><p className="mt-0.5 text-xs text-muted-foreground">+{txn.points} pts</p></div></div>)}</div></section>
         </div>

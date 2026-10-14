@@ -17,6 +17,7 @@ export interface WalletState {
   balance: number;
   points: number;
   transactions: Transaction[];
+  redeemedRewards: string[];
 }
 
 const DEFAULT_STATE: WalletState = {
@@ -24,6 +25,7 @@ const DEFAULT_STATE: WalletState = {
   username: null,
   balance: 1500,
   points: 50,
+  redeemedRewards: [],
   transactions: [
     {
       id: 'txn-1',
@@ -146,10 +148,27 @@ export function useWallet() {
     []
   );
 
+  const claimReward = useCallback((rewardId: string, cost: number) => {
+    setState(prev => {
+      if (prev.redeemedRewards.includes(rewardId)) {
+        throw new Error('This reward has already been claimed');
+      }
+      if (prev.points < cost) {
+        throw new Error(`You need ${cost - prev.points} more points to claim this reward`);
+      }
+      return {
+        ...prev,
+        points: prev.points - cost,
+        redeemedRewards: [...prev.redeemedRewards, rewardId],
+      };
+    });
+  }, []);
+
   return {
     ...state,
     login,
     logout,
     transact,
+    claimReward,
   };
 }
